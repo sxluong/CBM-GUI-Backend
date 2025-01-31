@@ -20,6 +20,5 @@ from app.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('train-model/', TrainModelView.as_view(), name='train-model'),
-
+    path('process-model/', MachineLearningModelView.as_view(), name='process-model'),
 ]
