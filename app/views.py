@@ -17,22 +17,16 @@ class MachineLearningModelView(APIView):
         model_id = request.query_params.get("model_id")  # Extract model_id from query parameters
         
         if not model_id:
-            return Response({"error": "model_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(None, status=status.HTTP_200_OK)  # Return None if model_id is missing
         
         model = MachineLearningModel.objects.filter(model_id=model_id).first()
         if model:
-            # If the model exists, return its details
+            # If the model exists, return its serialized data
             serializer = MachineLearningModelSerializer(model)
-            return Response({
-                "exists": True,
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            # If the model doesn't exist, return `exists: False`
-            return Response({
-                "exists": False,
-                "message": "Model not found"
-            }, status=status.HTTP_200_OK)
+            # If the model does not exist, return None
+            return Response(None, status=status.HTTP_200_OK)
 
     def post(self, request):
         """
@@ -49,6 +43,14 @@ class MachineLearningModelView(APIView):
         model = MachineLearningModel.objects.filter(model_id=model_id).first()
         if model:
             # If the model exists, handle retraining logic here
+
+
+
+
+
+
+
+
             return Response({
                 "message": "Model already exists. Retraining logic to be implemented."
             }, status=status.HTTP_200_OK)
