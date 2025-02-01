@@ -32,6 +32,7 @@ class MachineLearningModelView(APIView):
         """
         POST endpoint: Train a model if it does not already exist.
         """
+        # All these should be strings
         # Parse request data
         concept_dataset = request.data.get("concept_dataset", None)
         model_type = request.data.get("model_type")  # Can be LLM or Computer Vision (future use)
@@ -55,25 +56,27 @@ class MachineLearningModelView(APIView):
                 "message": "Model already exists. Retraining logic to be implemented."
             }, status=status.HTTP_200_OK)
         else:
-            # Train the model using subprocess calls
             subprocess.run([
-                "python", "get_concept_labels.py",
-                "--dataset", concept_dataset,
-                "--concept_text_sim_model", "mpnet",
-                "--model_id", str(model_id)
+                "python",
+                "training_scripts/get_concept_labels.py",
+                f"--dataset={concept_dataset}",
+                "--concept_text_sim_model=mpnet",
+                f"--model_id={model_id}"
             ], check=True)
 
             subprocess.run([
                 "python", "training_scripts/train_CBL.py",
                 "--automatic_concept_correction",
-                "--dataset", concept_dataset,
-                "--backbone", backbone,
+                f"--dataset={concept_dataset}",
+                f"--backbone={backbone}",
+                f"--model_id={model_id}",
+                f"--batch_size=16"
             ], check=True)
 
             subprocess.run([
-                "python", "train_FL.py", 
-                "--cbl_path", f"mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_epoch_8.pt",
-                "--backbone", backbone,
+                "python", "train_FL.py",
+                f"--cbl_path=mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_epoch_8.pt",
+                f"--backbone={backbone}"
             ], check=True)
 
             # Save the trained model details
@@ -86,6 +89,9 @@ class MachineLearningModelView(APIView):
                 sparse_model_path=sparse_model_path
             )
 
+
             return Response({
-                "message": "Model processing complete"
+                "message": "Model processing complete",
+                "model_path": full_model_path,
+                "sparse_model_path": sparse_model_path
             }, status=status.HTTP_200_OK)
