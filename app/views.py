@@ -75,23 +75,20 @@ class MachineLearningModelView(APIView):
 
             subprocess.run([
                 "python", "train_FL.py",
-                f"--cbl_path=mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_epoch_8.pt",
+                f"--cbl_path=mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_best.pt",
                 f"--backbone={backbone}"
             ], check=True)
 
             # Save the trained model details
-            full_model_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/W_g.pt"
-            sparse_model_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/W_g_sparse.pt"
+            full_model_path = f"mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_best.pt"
 
             MachineLearningModel.objects.create(
                 model_id=model_id,
                 model_path=full_model_path,
-                sparse_model_path=sparse_model_path
             )
 
 
             return Response({
                 "message": "Model processing complete",
                 "model_path": full_model_path,
-                "sparse_model_path": sparse_model_path
             }, status=status.HTTP_200_OK)
