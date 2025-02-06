@@ -44,20 +44,13 @@ class MachineLearningModelView(APIView):
         if model:
             # If the model exists, handle retraining logic here
 
-
-
-
-
-
-
-
             return Response({
                 "message": "Model already exists. Retraining logic to be implemented."
             }, status=status.HTTP_200_OK)
         else:
             # Train the model using subprocess calls
             subprocess.run([
-                "python", "get_concept_labels.py",
+                "python", "training_scripts/get_concept_labels.py",
                 "--dataset", concept_dataset,
                 "--concept_text_sim_model", "mpnet",
                 "--model_id", str(model_id)
@@ -68,10 +61,11 @@ class MachineLearningModelView(APIView):
                 "--automatic_concept_correction",
                 "--dataset", concept_dataset,
                 "--backbone", backbone,
+                "--model_id", str(model_id)
             ], check=True)
 
             subprocess.run([
-                "python", "train_FL.py", 
+                "python", "training_scripts/train_FL.py", 
                 "--cbl_path", f"mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_epoch_8.pt",
                 "--backbone", backbone,
             ], check=True)

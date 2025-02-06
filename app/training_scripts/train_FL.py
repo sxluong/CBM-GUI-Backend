@@ -48,8 +48,8 @@ if __name__ == "__main__":
 
     acs = args.cbl_path.split("/")[0]
     dataset = args.cbl_path.split("/")[1] if 'sst2' not in args.cbl_path.split("/")[1] else args.cbl_path.split("/")[1].replace('_', '/')
-    backbone = args.cbl_path.split("/")[2]
-    model_id = args.cbl_path.split("/")[3]
+    model_id = args.cbl_path.split("/")[2][-1]
+    backbone = args.cbl_path.split("/")[3]
     cbl_name = args.cbl_path.split("/")[-1]
     
     print("loading data...")
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     train_c, train_mean, train_std = normalize(train_c, d=0)
     train_c = F.relu(train_c)
 
-    prefix = "./" + acs + "/" + dataset.replace('/', '_') + "/" + backbone + "/" + f"model_{model_id}" + "/"
+    prefix = "./" + acs + "/" + dataset.replace('/', '_') + "/" + f"model_{model_id}" + "/" + backbone + "/" 
     model_name = cbl_name[3:]
     torch.save(train_mean, prefix + 'train_mean' + model_name)
     torch.save(train_std, prefix + 'train_std' + model_name)
