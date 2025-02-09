@@ -21,4 +21,5 @@ from app.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('process-model/', MachineLearningModelView.as_view(), name='process-model'),
+    path('classify-model/', ClassificationView.as_view(), name='classify-model'),
 ]
