@@ -186,7 +186,7 @@ def main():
             {"concept": concept, "activation": round(activation, 4)}
             for concept, activation in top_concepts
         ],
-        "final_prediction": prediction_idx
+        "final_prediction": 0 # Hardcoding for now
     }
 
     print(json.dumps(output))
