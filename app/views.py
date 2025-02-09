@@ -154,7 +154,7 @@ def post(self, request):
 
     # Build the command to call the script
     cmd = [
-        "python", "path/to/your_script.py",  # Replace with the actual path to the script
+        "python", "app/training_scripts/test_model.py",
         "--input", input_text,
         "--backbone", backbone,
         "--concept_dataset", concept_dataset,
