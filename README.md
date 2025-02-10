@@ -1,13 +1,41 @@
-To set up the project, first create a virtual environment using either Conda or Python’s built-in venv. For Conda, run:
-conda create -n myenv python=3.8
-conda activate myenv
-Alternatively, with Python’s venv, run:
-python -m venv venv
-Then activate the environment (on Unix/macOS: source venv/bin/activate, on Windows: venv\Scripts\activate). Once your virtual environment is active, install the required packages with:
-pip install -r requirements.txt
-Next, update the database schema by running:
-python manage.py makemigrations
-python manage.py migrate
-Finally, start the Django development server with:
-python manage.py runserver
-Remember to run the Django server alongside your frontend application.
+# Project Setup Instructions
+
+To set up the project:
+
+1. **Create a virtual environment** using either Conda or Python's built-in `venv`:
+   - Using Conda:d
+     ```bash
+     conda create -n myenv python=3.9
+     conda activate myenv
+     ```
+   - Using Python's `venv`:
+     ```bash
+     python -m venv venv
+     # Activate the virtual environment:
+     # On Unix/macOS:
+     source venv/bin/activate
+     # On Windows:
+     venv\Scripts\activate
+     ```
+
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+
+3. **Update the database schema**:
+   - Create migrations for the latest data model:
+     ```bash
+     python manage.py makemigrations
+     ```
+   - Apply the migrations to update the database:
+     ```bash
+     python manage.py migrate
+     ```
+
+4. **Run the development server**:
+   - Start the Django development server:
+     ```bash
+     python manage.py runserver
+     ```
+
+   > **Note:** Make sure to run the Django server **alongside your frontend application** to ensure the full application stack is operational.
