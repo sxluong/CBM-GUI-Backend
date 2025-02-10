@@ -39,8 +39,8 @@ To set up the project:
      ```
 
 5. **Run frontend services:** 
-The backend serves data to the frontend, which runs at [http://localhost:3000](http://localhost:3050). Ensure both are running for full functionality.  
-Access the frontend repo through this link: [CBM-GUI-Frontend](https://github.com/gabrielchasukjin/cbm-gui-frontend)
+   - The backend serves data to the frontend, which runs at [http://localhost:3000](http://localhost:3050). Ensure both are running for full functionality.
+   - Access the frontend repo through this link: [CBM-GUI-Frontend](https://github.com/gabrielchasukjin/cbm-gui-frontend)
 
 
    > **Note:** Make sure to run the Django server **alongside your frontend application** to ensure the full application stack is operational.
