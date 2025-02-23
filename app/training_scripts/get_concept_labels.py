@@ -17,6 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parser.add_argument("--dataset", type=str, default="SetFit/sst2")
 parser.add_argument("--concept_text_sim_model", type=str, default="mpnet", help="mpnet, simcse or angle")
 parser.add_argument("--model_id", type=str, required=True, help="Unique ID for the model being processed")  # Add model_id
+parser.add_argument("--custom_concepts", nargs='*', default=[], help="List of custom concepts to use")
 parser.add_argument("--max_length", type=int, default=512)
 parser.add_argument("--num_workers", type=int, default=0)
 
@@ -51,7 +52,13 @@ print("training data len: ", len(train_dataset))
 if args.dataset == 'SetFit/sst2':
     print("val data len: ", len(val_dataset))
 
-concept_set = CFG.concept_set[args.dataset]
+if len(args.custom_concepts) > 0:
+    # If we do have custom concepts, use them
+    concept_set = args.custom_concepts
+else:
+    # Otherwise, fall back to the default set in config
+    concept_set = CFG.concept_set[args.dataset]
+    
 print("concept len: ", len(concept_set))
 
 if args.concept_text_sim_model == 'mpnet':

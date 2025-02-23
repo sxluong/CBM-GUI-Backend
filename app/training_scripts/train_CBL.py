@@ -19,6 +19,7 @@ parser.add_argument("--backbone", type=str, default="roberta", help="roberta or 
 parser.add_argument("--model_id", type=str, required=True, help="Unique model ID to load saved concept files")
 parser.add_argument('--tune_cbl_only', action=argparse.BooleanOptionalAction)
 parser.add_argument('--automatic_concept_correction', action=argparse.BooleanOptionalAction)
+parser.add_argument("--custom_concepts", nargs='*', default=[], help="List of custom concepts to use")
 parser.add_argument("--labeling", type=str, default="mpnet", help="mpnet, angle, simcse, llm")
 parser.add_argument("--cbl_only_batch_size", type=int, default=64)
 parser.add_argument("--batch_size", type=int, default=16)
@@ -113,8 +114,14 @@ if __name__ == "__main__":
             encoded_val_dataset = encoded_val_dataset.remove_columns(['title'])
         encoded_val_dataset = encoded_val_dataset[:len(encoded_val_dataset)]
 
+    # techinically the length of the concept set is what really matters in the script
+    if len(args.custom_concepts) > 0:
+        # If we do have custom concepts, use them
+        concept_set = args.custom_concepts
+    else:
+        # Otherwise, fall back to the default set in config
+        concept_set = CFG.concept_set[args.dataset]
 
-    concept_set = CFG.concept_set[args.dataset]
     print("concept len: ", len(concept_set))
 
     d_name = args.dataset.replace('/', '_')
