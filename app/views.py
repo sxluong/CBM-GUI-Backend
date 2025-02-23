@@ -1,6 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+import config as CFG
+import training_scripts.concepts
+import tempfile
 from .models import MachineLearningModel
 from .serializer import MachineLearningModelSerializer
 import subprocess
@@ -54,16 +57,44 @@ class MachineLearningModelView(APIView):
         model_id = request.data.get("model_id")  # Passed in from the frontend tab
         hardware = request.data.get("hardware", "Local Hardware")  # Default hardware
 
+        # pruned concepts
+        pruned_concepts = request.data.get("pruned_concepts", set())
+
+
         # Check if the model already exists
         model = MachineLearningModel.objects.filter(model_id=model_id).first()
+
         if model:
-            # If the model exists, handle retraining logic here
+            
+            concept_set = CFG.concept_set[concept_dataset]
+            pruned_concepts = set(pruned_concepts)
+            new_concept_set = [c for c in concept_set if c not in pruned_concepts]    
+            
+            subprocess.run([
+                "python",
+                "app/training_scripts/get_concept_labels.py",
+                f"--dataset={concept_dataset}",
+                "--concept_text_sim_model=mpnet",
+                f"--model_id={model_id}",
+                "--custom_concepts"
+            ] + new_concept_set, check=True)
+
+            subprocess.run([
+                "python", "app/training_scripts/train_CBL.py",
+                "--automatic_concept_correction",
+                f"--dataset={concept_dataset}",
+                f"--backbone={backbone}",
+                f"--model_id={model_id}",
+                f"--batch_size=16",
+                "--custom_concepts"
+            ] + new_concept_set, check=True)
 
 
-
-
-
-
+            subprocess.run([
+                "python", "app/training_scripts/train_FL.py",
+                f"--cbl_path=mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_best.pt",
+                f"--backbone={backbone}"
+            ], check=True)
 
 
             return Response({
