@@ -208,7 +208,7 @@ if __name__ == "__main__":
         prefix += 'gpt2_cbm'
     prefix += "/"
     
-    trained_model_path = prefix + "trained_model/"
+    trained_model_path = prefix
     if not os.path.exists(trained_model_path):
         os.makedirs(trained_model_path)
 

@@ -13,4 +13,5 @@ class MachineLearningModelSerializer(serializers.ModelSerializer):
             'fl_std_path',
             'backbone',
             'created_at'
+            'full_accuracy'
         ]

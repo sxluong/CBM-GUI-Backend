@@ -9,4 +9,4 @@ class MachineLearningModel(models.Model):
     fl_std_path = models.CharField(max_length=500)
     backbone = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)  # Timestamp for model creation 
-    
+    full_accuracy = models.FloatField()

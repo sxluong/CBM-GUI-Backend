@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 from transformers import RobertaTokenizerFast, RobertaModel, GPT2TokenizerFast, GPT2Model
 from datasets import load_dataset
+import json
 import config as CFG
 from modules import CBL, RobertaCBL, GPT2CBL
 from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
@@ -197,7 +198,7 @@ if __name__ == "__main__":
     train_c, train_mean, train_std = normalize(train_c, d=0)
     train_c = F.relu(train_c)
 
-    prefix = "./" + acs + "/" + dataset.replace('/', '_') + "/" + backbone + "/" + f"model_{model_id}" + "/"
+    prefix = "./" + acs + "/" + dataset.replace('/', '_') + "/" + f"model_{model_id}" + "/" + f"{backbone}_cbm" + "/"
     model_name = cbl_name[3:]
     torch.save(train_mean, prefix + 'train_mean' + model_name)
     torch.save(train_std, prefix + 'train_std' + model_name)
@@ -248,6 +249,7 @@ if __name__ == "__main__":
     print("save weights with test acc:", output_proj['path'][-1]['metrics']['acc_test'])
     W_g = output_proj['path'][-1]['weight']
     b_g = output_proj['path'][-1]['bias']
+    accuracy = output_proj['path'][-1]['metrics']['acc_test']
 
     if dataset == 'SetFit/sst2':
         output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, epsilon=1, k=1,
@@ -260,10 +262,19 @@ if __name__ == "__main__":
     print("save the sparse weights with test acc:", output_proj['path'][0]['metrics']['acc_test'])
     W_g_sparse = output_proj['path'][0]['weight']
     b_g_sparse = output_proj['path'][0]['bias']
+    accuracy_sparse = output_proj['path'][-1]['metrics']['acc_test']
 
     torch.save(W_g, prefix + 'W_g' + model_name)
     torch.save(b_g, prefix + 'b_g' + model_name)
     torch.save(W_g_sparse, prefix + 'W_g_sparse' + model_name)
     torch.save(b_g_sparse, prefix + 'b_g_sparse' + model_name)
 
+
+    acc_data = {
+        "full_accuracy": float(accuracy),
+        "sparse_accuracy": float(accuracy_sparse)
+        }
+    
+    with open(prefix + "accuracies.json", "w") as f:
+        json.dump(acc_data, f)
 

@@ -1,9 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-import config as CFG
-import training_scripts.concepts
-import tempfile
+import json
+from .training_scripts import concepts
 from .models import MachineLearningModel
 from .serializer import MachineLearningModelSerializer
 import subprocess
@@ -55,7 +54,6 @@ class MachineLearningModelView(APIView):
         concept_dataset = request.data.get("concept_dataset", None)
         backbone = request.data.get("backbone")  # Either roberta or gpt2
         model_id = request.data.get("model_id")  # Passed in from the frontend tab
-        hardware = request.data.get("hardware", "Local Hardware")  # Default hardware
 
         # pruned concepts
         pruned_concepts = request.data.get("pruned_concepts", set())
@@ -65,11 +63,13 @@ class MachineLearningModelView(APIView):
         model = MachineLearningModel.objects.filter(model_id=model_id).first()
 
         if model:
-            
-            concept_set = CFG.concept_set[concept_dataset]
+            concept_set = {'SetFit/sst2': concepts.sst2, 'yelp_polarity': concepts.yelpp, 'ag_news': concepts.agnews, 'dbpedia_14': concepts.dbpedia}
+
+            concept_set = concept_set[concept_dataset]
             pruned_concepts = set(pruned_concepts)
             new_concept_set = [c for c in concept_set if c not in pruned_concepts]    
-            
+            previous_accuracy = model.full_accuracy
+
             subprocess.run([
                 "python",
                 "app/training_scripts/get_concept_labels.py",
@@ -96,10 +96,19 @@ class MachineLearningModelView(APIView):
                 f"--backbone={backbone}"
             ], check=True)
 
+            
+            with open(accuracy_path, 'r') as f:
+                accuracy_data = json.load(f)
+            
+            new_accuracy = accuracy_data['full_accuracy']
 
             return Response({
-                "message": "Model already exists. Retraining logic to be implemented."
+                "message": "Model already exists. Retraining logic to be implemented.",
+                "previous_accuracy": previous_accuracy,
+                "new_accuracy": new_accuracy,
             }, status=status.HTTP_200_OK)
+        
+
         else:
             subprocess.run([
                 "python",
@@ -120,16 +129,26 @@ class MachineLearningModelView(APIView):
 
             subprocess.run([
                 "python", "app/training_scripts/train_FL.py",
-                f"--cbl_path=mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_best.pt",
+                f"--cbl_path=mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/cbl_acc_best.pt",
                 f"--backbone={backbone}"
             ], check=True)
 
             # Save the trained model details
-            full_model_path = f"mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_best.pt"
+            full_model_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/cbl_acc_best.pt"
             fl_weightings_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/W_g_acc_best.pt"
             fl_biases_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/b_g_acc_best.pt"
             fl_std_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/train_std_acc_best.pt"
             fl_mean_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/train_mean_acc_best.pt"
+
+
+            # read json to retrieve accuracy
+            accuracy_path = f"mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/accuracies.json"
+
+            with open(accuracy_path, 'r') as f:
+                accuracy_data = json.load(f)
+            
+            accuracy = accuracy_data['full_accuracy']
+            
             MachineLearningModel.objects.create(
                 model_id=model_id,
                 model_path=full_model_path,
@@ -138,11 +157,13 @@ class MachineLearningModelView(APIView):
                 fl_std_path = fl_std_path,
                 fl_mean_path = fl_mean_path,
                 backbone=backbone,
+                full_accuracy=accuracy,
             )
 
             return Response({
                 "message": "Model processing complete",
                 "model_path": full_model_path,
+                "model_accuracy": accuracy,
             }, status=status.HTTP_200_OK)
         
 
