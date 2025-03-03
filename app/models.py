@@ -10,3 +10,6 @@ class MachineLearningModel(models.Model):
     backbone = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)  # Timestamp for model creation 
     full_accuracy = models.FloatField()
+    pruned_concepts = models.JSONField(null=True)  # Store list of pruned concepts
+    is_pruned_version = models.BooleanField(default=False)
+    original_model_id = models.CharField(max_length=100, null=True)  # Reference to original model

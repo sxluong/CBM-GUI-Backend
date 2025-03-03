@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -47,11 +48,22 @@ if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     args = parser.parse_args()
 
+    print(args.cbl_path)
+
     acs = args.cbl_path.split("/")[0]
-    dataset = args.cbl_path.split("/")[1] if 'sst2' not in args.cbl_path.split("/")[1] else args.cbl_path.split("/")[1].replace('_', '/')
-    backbone = args.cbl_path.split("/")[2]
-    model_id = args.cbl_path.split("/")[3]
+    dataset = args.cbl_path.split("/")[1] if 'Fit' not in args.cbl_path.split("/")[1] else 'SetFit/sst2'
+    print(dataset)
+    
+    backbone = "roberta" if 'roberta' in args.cbl_path else "gpt2" 
+    print(backbone)
+    
+    match = re.search(r'model_\d+', args.cbl_path)
+    model_id = match.group()
+    print(model_id)
+    
     cbl_name = args.cbl_path.split("/")[-1]
+    cbl_path_new = args.cbl_path.replace("SetFit/sst2", "SetFit_sst2")
+
     
     print("loading data...")
     train_dataset = load_dataset(dataset, split='train')
@@ -117,7 +129,7 @@ if __name__ == "__main__":
         else:
             print("preparing backbone(roberta)+CBL...")
             backbone_cbl = RobertaCBL(len(concept_set), args.dropout).to(device)
-            backbone_cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
+            backbone_cbl.load_state_dict(torch.load(cbl_path_new, map_location=device))
             backbone_cbl.eval()
     elif 'gpt2' in backbone:
         if 'no_backbone' in cbl_name:
@@ -198,7 +210,7 @@ if __name__ == "__main__":
     train_c, train_mean, train_std = normalize(train_c, d=0)
     train_c = F.relu(train_c)
 
-    prefix = "./" + acs + "/" + dataset.replace('/', '_') + "/" + f"model_{model_id}" + "/" + f"{backbone}_cbm" + "/"
+    prefix =  acs + "/" + dataset.replace('/', '_') + "/" + model_id + "/" + backbone + "_cbm" + "/"
     model_name = cbl_name[3:]
     torch.save(train_mean, prefix + 'train_mean' + model_name)
     torch.save(train_std, prefix + 'train_std' + model_name)

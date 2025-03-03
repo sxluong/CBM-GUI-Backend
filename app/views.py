@@ -6,6 +6,8 @@ from .training_scripts import concepts
 from .models import MachineLearningModel
 from .serializer import MachineLearningModelSerializer
 import subprocess
+from datetime import datetime
+import hashlib
 
 class MachineLearningModelView(APIView):
     """
@@ -70,37 +72,63 @@ class MachineLearningModelView(APIView):
             new_concept_set = [c for c in concept_set if c not in pruned_concepts]    
             previous_accuracy = model.full_accuracy
 
+            # Simpler pruned model ID with just timestamp and number of pruned concepts
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            pruned_model_id = f"{model_id}_pruned_{len(pruned_concepts)}_{timestamp}"
+            
+            # Handle SetFit/sst2 special case
+            formatted_dataset = concept_dataset.replace('/', '_') if concept_dataset == 'SetFit/sst2' else concept_dataset
+            
             subprocess.run([
                 "python",
                 "app/training_scripts/get_concept_labels.py",
-                f"--dataset={concept_dataset}",
+                f"--dataset={concept_dataset}",  # Keep original format for the script
                 "--concept_text_sim_model=mpnet",
-                f"--model_id={model_id}",
+                f"--model_id={pruned_model_id}",
                 "--custom_concepts"
             ] + new_concept_set, check=True)
 
+            # The actual path structure based on your screenshot
+            model_base_path = f"mpnet_acs/{formatted_dataset}/model_{pruned_model_id}/roberta_cbm"
+            
             subprocess.run([
                 "python", "app/training_scripts/train_CBL.py",
                 "--automatic_concept_correction",
                 f"--dataset={concept_dataset}",
                 f"--backbone={backbone}",
-                f"--model_id={model_id}",
+                f"--model_id={pruned_model_id}",
                 f"--batch_size=16",
                 "--custom_concepts"
             ] + new_concept_set, check=True)
 
-
             subprocess.run([
                 "python", "app/training_scripts/train_FL.py",
-                f"--cbl_path=mpnet_acs/{concept_dataset}/{backbone}_cbm/model_{model_id}/cbl_acc_best.pt",
+                f"--cbl_path={model_base_path}/cbl_acc_best.pt",
                 f"--backbone={backbone}"
             ], check=True)
 
+            # Read accuracy from the correct path
+            accuracy_path = f"{model_base_path}/accuracies.json"
             
             with open(accuracy_path, 'r') as f:
                 accuracy_data = json.load(f)
             
             new_accuracy = accuracy_data['full_accuracy']
+
+            # Update the database with the pruned model information
+            MachineLearningModel.objects.create(
+                model_id=pruned_model_id,
+                model_path=f"{model_base_path}/cbl_acc_best.pt",
+                fl_weightings_path=f"{model_base_path}/W_g_acc_best.pt",
+                fl_biases_path=f"{model_base_path}/b_g_acc_best.pt",
+                fl_std_path=f"{model_base_path}/train_std_acc_best.pt",
+                fl_mean_path=f"{model_base_path}/train_mean_acc_best.pt",
+                backbone=backbone,
+                full_accuracy=new_accuracy,
+                pruned_concepts=list(pruned_concepts),  # Store the pruned concepts
+                is_pruned_version=True,
+                original_model_id=model_id
+            )
 
             return Response({
                 "message": "Model already exists. Retraining logic to be implemented.",
@@ -129,8 +157,7 @@ class MachineLearningModelView(APIView):
 
             subprocess.run([
                 "python", "app/training_scripts/train_FL.py",
-                f"--cbl_path=mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/cbl_acc_best.pt",
-                f"--backbone={backbone}"
+                f"--cbl_path=mpnet_acs/{concept_dataset}/model_{model_id}/{backbone}_cbm/cbl_acc_best.pt"
             ], check=True)
 
             # Save the trained model details
