@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from transformers import RobertaModel, GPT2Model
-from training_utils import eos_pooling
+from .utils import eos_pooling
 
 class CBL(nn.Module):
     def __init__(self, concept_dim, dropout):

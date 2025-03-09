@@ -16,10 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from app.views import MachineLearningModelView, ClassificationView
+from django.conf import settings
+from django.conf.urls.static import static
+from app.views import MachineLearningModelView, ClassificationView, BiasDetectionView, ConceptPruningView, evaluate_model
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('process-model/', MachineLearningModelView.as_view(), name='process-model'),
+    path('process-model/', MachineLearningModelView.as_view(), name='process-model'), 
     path('classify-model/', ClassificationView.as_view(), name='classify-model'),
-]
+    path('detect-bias/', BiasDetectionView.as_view(), name='detect-bias'),
+    path('prune-concepts/', ConceptPruningView.as_view(), name='prune-concepts'),
+    path('evaluate-model/', evaluate_model, name='evaluate_model'),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

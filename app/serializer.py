@@ -12,6 +12,9 @@ class MachineLearningModelSerializer(serializers.ModelSerializer):
             'fl_mean_path',
             'fl_std_path',
             'backbone',
-            'created_at'
-            'full_accuracy'
+            'created_at',
+            'full_accuracy',
+            'pruned_concepts',
+            'is_pruned_version',
+            'original_model_id'
         ]
